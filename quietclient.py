@@ -144,7 +144,7 @@ class Fan:
         logger.info("Fan info: %s", fan_info)
         return fan_info
 
-    async def ping_device(self) -> None:
+    async def do_it(self) -> None:
         try:
             await self.find_fan()
             await self.connect()
@@ -162,4 +162,4 @@ class Fan:
 
 if __name__ == "__main__":
     fan = Fan()
-    asyncio.run(fan.ping_device())
+    asyncio.run(fan.do_it())
