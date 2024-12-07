@@ -13,7 +13,7 @@ from bleak.backends.device import BLEDevice
 # Add logger configuration at the top
 logger = logging.getLogger(__name__)
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 
@@ -58,6 +58,37 @@ class VersionInfo:
             create_date=response["Create_Date"],
             create_mode=response["Create_Mode"],
             hw_version=response["HW_Version"]
+        )
+
+
+@dataclass
+class ParameterInfo:
+    mode: str
+    fan_type: str
+    temp_high: int
+    temp_medium: int
+    temp_low: int
+    humidity_high: int
+    humidity_low: int
+    humidity_range: str
+    hour: int
+    minute: int
+    time_range: str
+
+    @classmethod
+    def from_response(cls, response: dict) -> 'ParameterInfo':
+        return cls(
+            mode=response['Mode'],
+            fan_type=response['FanType'],
+            temp_high=response['GetTemp_H'],
+            temp_medium=response['GetTemp_M'],
+            temp_low=response['GetTemp_L'],
+            humidity_high=response['GetHum_H'],
+            humidity_low=response['GetHum_L'],
+            humidity_range=response['GetHum_Range'],
+            hour=response['GetHour'],
+            minute=response['GetMinute'],
+            time_range=response['GetTime_Range']
         )
 
 
@@ -169,14 +200,19 @@ class Fan:
         logger.debug("Version info: %s", version_info)
         return version_info
 
+    async def get_parameter(self) -> ParameterInfo:
+        response = await self.send_command(Api="GetParameter")
+        parameter_info = ParameterInfo.from_response(response)
+        logger.debug("Parameter: %s", parameter_info)
+        return parameter_info
+
     async def do_it(self) -> None:
         try:
             await self.find_fan()
             await self.connect()
             await self.login()
 
-#            await self.get_fan_info()
-            await self.get_version()
+            await self.get_parameter()
 
             await asyncio.sleep(120)
         except asyncio.exceptions.CancelledError:
