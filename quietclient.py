@@ -22,8 +22,8 @@ UUID_SERVER = "000000ff-0000-1000-8000-00805f9b34fb"
 UUID_KEY_DATA = "0000ff01-0000-1000-8000-00805f9b34fb"
 UUID_KEY_NOTIFY = "00002902-0000-1000-8000-00805f9b34fb"
 
-# PAIR_ID = "aa4a737ffd756c6d"
-PAIR_ID = "a1b2c1d2a2b1c2d1"
+PAIR_ID = "aa4a737ffd756c6d"
+# PAIR_ID = "a1b2c1d2a2b1c2d1"
 
 
 class Fan:
@@ -72,10 +72,12 @@ class Fan:
                 logger.debug("Received response %s in %d packets",
                              value, self.packet_counter)
                 self.packet_counter = 0
-                self.receive_buffer.truncate(0)
+                self.receive_buffer = StringIO()
                 return value
-            except json.JSONDecodeError:
+            except json.JSONDecodeError as e:
                 # message is not complete yet
+                #                logger.debug("Message not complete (%s). Buffer is: %s",
+                #                             e, self.receive_buffer.getvalue())
                 self.packet_counter += 1
                 continue
 
@@ -118,11 +120,19 @@ class Fan:
         else:
             raise Exception("Login failed", response)
 
+    async def get_fan_info(self) -> None:
+        message = {"Api": "GetFanInfo"}
+        payload = json.dumps(message).encode("utf-8")
+        await self.send_message(payload)
+        response = await self.get_response()
+        logger.info("Fan info: %s", response)
+
     async def ping_device(self) -> None:
         try:
             await self.find_fan()
             await self.connect()
             await self.login()
+            await self.get_fan_info()
 
             await asyncio.sleep(120)
         except asyncio.exceptions.CancelledError:
