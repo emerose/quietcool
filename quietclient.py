@@ -12,7 +12,7 @@ from bleak.backends.device import BLEDevice
 # Add logger configuration at the top
 logger = logging.getLogger(__name__)
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 
@@ -64,7 +64,7 @@ class Fan:
         self.receive_buffer.write(str)
         self.data_waiting.release()
 
-    async def get_response(self) -> Any:
+    async def get_response(self) -> dict:
         while True:
             await self.data_waiting.acquire()
             try:
@@ -109,11 +109,13 @@ class Fan:
             logger.debug("Sent %s (%d bytes), response: %s",
                          s, len(s), response)
 
-    async def login(self) -> None:
-        message = {"Api": "Login", "PhoneID": PAIR_ID}
-        payload = json.dumps(message).encode("utf-8")
+    async def send_command(self, **kwargs) -> dict:
+        payload = json.dumps(kwargs).encode("utf-8")
         await self.send_message(payload)
-        response = await self.get_response()
+        return await self.get_response()
+
+    async def login(self) -> None:
+        response = await self.send_command(Api="Login", PhoneID=PAIR_ID)
         if response["Result"] == "Success":
             self.logged_in = True
             logger.info("Logged in")
@@ -121,10 +123,7 @@ class Fan:
             raise Exception("Login failed", response)
 
     async def get_fan_info(self) -> None:
-        message = {"Api": "GetFanInfo"}
-        payload = json.dumps(message).encode("utf-8")
-        await self.send_message(payload)
-        response = await self.get_response()
+        response = await self.send_command(Api="GetFanInfo")
         logger.info("Fan info: %s", response)
 
     async def ping_device(self) -> None:
