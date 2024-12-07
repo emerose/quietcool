@@ -22,8 +22,8 @@ UUID_SERVER = "000000ff-0000-1000-8000-00805f9b34fb"
 UUID_KEY_DATA = "0000ff01-0000-1000-8000-00805f9b34fb"
 UUID_KEY_NOTIFY = "00002902-0000-1000-8000-00805f9b34fb"
 
-PAIR_ID = "aa4a737ffd756c6d"
-# PAIR_ID = "a1b2c1d2a2b1c2d1"
+# PAIR_ID = "aa4a737ffd756c6d"
+PAIR_ID = "a1b2c1d2a2b1c2d1"
 
 
 class Fan:
@@ -35,6 +35,7 @@ class Fan:
         self.client: Optional[BleakClient] = None
         self.data_waiting: asyncio.Semaphore = asyncio.Semaphore(0)
         self.packet_counter: int = 0
+        self.logged_in: bool = False
 
     def sliced(self, data: bytes, n: int) -> Iterator[bytes]:
         """
@@ -106,16 +107,22 @@ class Fan:
             logger.debug("Sent %s (%d bytes), response: %s",
                          s, len(s), response)
 
-    async def ping_device(self) -> None:
-        await self.find_fan()
-        await self.connect()
+    async def login(self) -> None:
+        message = {"Api": "Login", "PhoneID": PAIR_ID}
+        payload = json.dumps(message).encode("utf-8")
+        await self.send_message(payload)
+        response = await self.get_response()
+        if response["Result"] == "Success":
+            self.logged_in = True
+            logger.info("Logged in")
+        else:
+            raise Exception("Login failed", response)
 
+    async def ping_device(self) -> None:
         try:
-            message = {"Api": "Login", "PhoneID": PAIR_ID}
-            payload = json.dumps(message).encode("utf-8")
-            await self.send_message(payload)
-            response = await self.get_response()
-            logger.info("Response: %s", response)
+            await self.find_fan()
+            await self.connect()
+            await self.login()
 
             await asyncio.sleep(120)
         except asyncio.exceptions.CancelledError:
