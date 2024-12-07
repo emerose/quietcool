@@ -4,6 +4,7 @@ import logging
 from io import StringIO
 from itertools import count, takewhile
 from typing import Iterator, Optional, Any
+from dataclasses import dataclass
 
 from bleak import BleakClient, BleakScanner
 from bleak.backends.characteristic import BleakGATTCharacteristic
@@ -24,6 +25,21 @@ UUID_KEY_NOTIFY = "00002902-0000-1000-8000-00805f9b34fb"
 
 PAIR_ID = "aa4a737ffd756c6d"
 # PAIR_ID = "a1b2c1d2a2b1c2d1"
+
+
+@dataclass
+class FanInfo:
+    name: str
+    model: str
+    serial_num: str
+
+    @classmethod
+    def from_response(cls, response: dict) -> 'FanInfo':
+        return cls(
+            name=response['Name'],
+            model=response['Model'],
+            serial_num=response['SerialNum']
+        )
 
 
 class Fan:
@@ -122,16 +138,19 @@ class Fan:
         else:
             raise Exception("Login failed", response)
 
-    async def get_fan_info(self) -> None:
+    async def get_fan_info(self) -> FanInfo:
         response = await self.send_command(Api="GetFanInfo")
-        logger.info("Fan info: %s", response)
+        fan_info = FanInfo.from_response(response)
+        logger.info("Fan info: %s", fan_info)
+        return fan_info
 
     async def ping_device(self) -> None:
         try:
             await self.find_fan()
             await self.connect()
             await self.login()
-            await self.get_fan_info()
+            info = await self.get_fan_info()
+            logger.info("Fan serial number: %s", info.serial_num)
 
             await asyncio.sleep(120)
         except asyncio.exceptions.CancelledError:
