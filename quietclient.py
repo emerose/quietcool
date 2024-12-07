@@ -42,6 +42,25 @@ class FanInfo:
         )
 
 
+@dataclass
+class VersionInfo:
+    version: str
+    protect_temp: int
+    create_date: str
+    create_mode: str
+    hw_version: str
+
+    @classmethod
+    def from_response(cls, response: dict) -> "VersionInfo":
+        return cls(
+            version=response["Version"],
+            protect_temp=response["ProtectTemp"],
+            create_date=response["Create_Date"],
+            create_mode=response["Create_Mode"],
+            hw_version=response["HW_Version"]
+        )
+
+
 class Fan:
     def __init__(self) -> None:
         self.send_buffer: StringIO = StringIO()
@@ -141,16 +160,23 @@ class Fan:
     async def get_fan_info(self) -> FanInfo:
         response = await self.send_command(Api="GetFanInfo")
         fan_info = FanInfo.from_response(response)
-        logger.info("Fan info: %s", fan_info)
+        logger.debug("Fan info: %s", fan_info)
         return fan_info
+
+    async def get_version(self) -> VersionInfo:
+        response = await self.send_command(Api="GetVersion")
+        version_info = VersionInfo.from_response(response)
+        logger.debug("Version info: %s", version_info)
+        return version_info
 
     async def do_it(self) -> None:
         try:
             await self.find_fan()
             await self.connect()
             await self.login()
-            info = await self.get_fan_info()
-            logger.info("Fan serial number: %s", info.serial_num)
+
+#            await self.get_fan_info()
+            await self.get_version()
 
             await asyncio.sleep(120)
         except asyncio.exceptions.CancelledError:
