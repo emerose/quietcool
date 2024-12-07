@@ -1,6 +1,7 @@
 from .device import Device
 import logging
 from dataclasses import dataclass
+from typing import Self
 
 
 @dataclass
@@ -10,7 +11,7 @@ class FanInfo:
     serial_num: str
 
     @classmethod
-    def from_response(cls, response: dict) -> 'FanInfo':
+    def from_response(cls, response: dict) -> Self:
         return cls(
             name=response['Name'],
             model=response['Model'],
@@ -27,7 +28,7 @@ class VersionInfo:
     hw_version: str
 
     @classmethod
-    def from_response(cls, response: dict) -> "VersionInfo":
+    def from_response(cls, response: dict) -> Self:
         return cls(
             version=response["Version"],
             protect_temp=response["ProtectTemp"],
@@ -52,7 +53,7 @@ class ParameterInfo:
     time_range: str
 
     @classmethod
-    def from_response(cls, response: dict) -> 'ParameterInfo':
+    def from_response(cls, response: dict) -> Self:
         return cls(
             mode=response['Mode'],
             fan_type=response['FanType'],
