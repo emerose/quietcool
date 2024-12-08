@@ -6,7 +6,7 @@ from quietclient.client import Client
 # Add logger configuration at the top
 logger = logging.getLogger(__name__)
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 

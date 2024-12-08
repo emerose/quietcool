@@ -1,7 +1,7 @@
 from .device import Device
 from . import logger
 from dataclasses import dataclass
-from typing import Self, Any
+from typing import Self, Any, TypeAlias
 
 
 @dataclass
@@ -79,25 +79,20 @@ class Preset:
     humidity_on: int
     humidity_speed: str
 
-
-@dataclass
-class PresetList:
-    presets: list[Preset]
-
     @classmethod
-    def from_response(cls, response: dict) -> Self:
-        presets = []
-        for preset in response["Presets"]:
-            presets.append(Preset(
-                name=preset[0],
-                temp_high=preset[1],
-                temp_med=preset[2],
-                temp_low=preset[3],
-                humidity_off=preset[4],
-                humidity_on=preset[5],
-                humidity_speed=preset[6]
-            ))
-        return cls(presets=presets)
+    def from_response(cls, response: list) -> Self:
+        return cls(
+            name=response[0],
+            temp_high=response[1],
+            temp_med=response[2],
+            temp_low=response[3],
+            humidity_off=response[4],
+            humidity_on=response[5],
+            humidity_speed=response[6]
+        )
+
+
+PresetList: TypeAlias = list[Preset]
 
 
 class Api:
@@ -146,9 +141,10 @@ class Api:
         await self.ensure_logged_in()
 
         response = await self.device.send_command(Api="GetPresets")
-        preset_list = PresetList.from_response(response)
-        logger.debug("Presets: %s", preset_list)
-        return preset_list
+        presets = [Preset.from_response(preset)
+                   for preset in response["Presets"]]
+        logger.debug("Presets: %s", presets)
+        return presets
 
     async def testcmd(self) -> Any:
         await self.ensure_logged_in()
