@@ -95,6 +95,51 @@ class Preset:
 PresetList: TypeAlias = list[Preset]
 
 
+@dataclass
+class RemainTime:
+    hours: int
+    minutes: int
+    seconds: int
+
+    @classmethod
+    def from_response(cls, response: dict) -> Self:
+        return cls(
+            hours=response['RemainHour'],
+            minutes=response['RemainMinute'],
+            seconds=response['RemainSecond']
+        )
+
+
+@dataclass
+class UpgradeState:
+    state: str
+
+    @classmethod
+    def from_response(cls, response: dict) -> Self:
+        return cls(
+            state=response['State']
+        )
+
+
+@dataclass
+class WorkState:
+    mode: str
+    range: str
+    sensor_state: str
+    temperature: float
+    humidity: int
+
+    @classmethod
+    def from_response(cls, response: dict) -> Self:
+        return cls(
+            mode=response['Mode'],
+            range=response['Range'],
+            sensor_state=response['SensorState'],
+            temperature=response['Temp_Sample'] / 10,
+            humidity=response['Humidity_Sample']
+        )
+
+
 class Api:
     def __init__(self, device: Device, pair_id: str) -> None:
         self.device = device
@@ -121,14 +166,6 @@ class Api:
         logger.debug("Fan info: %s", fan_info)
         return fan_info
 
-    async def get_version(self) -> VersionInfo:
-        await self.ensure_logged_in()
-
-        response = await self.device.send_command(Api="GetVersion")
-        version_info = VersionInfo.from_response(response)
-        logger.debug("Version info: %s", version_info)
-        return version_info
-
     async def get_parameter(self) -> Parameters:
         await self.ensure_logged_in()
 
@@ -146,9 +183,42 @@ class Api:
         logger.debug("Presets: %s", presets)
         return presets
 
+    async def get_remain_time(self) -> RemainTime:
+        await self.ensure_logged_in()
+
+        response = await self.device.send_command(Api="GetRemainTime")
+        remain_time = RemainTime.from_response(response)
+        logger.debug("Remain time: %s", remain_time)
+        return remain_time
+
+    async def get_upgrade_state(self) -> UpgradeState:
+        await self.ensure_logged_in()
+
+        response = await self.device.send_command(Api="GetUpgradeState")
+        upgrade_state = UpgradeState.from_response(response)
+        logger.debug("Upgrade state: %s", upgrade_state)
+        return upgrade_state
+
+    async def get_version(self) -> VersionInfo:
+        await self.ensure_logged_in()
+
+        response = await self.device.send_command(Api="GetVersion")
+        version_info = VersionInfo.from_response(response)
+        logger.debug("Version info: %s", version_info)
+        return version_info
+
+    async def get_work_state(self) -> WorkState:
+        await self.ensure_logged_in()
+
+        response = await self.device.send_command(Api="GetWorkState")
+        work_state = WorkState.from_response(response)
+        logger.debug("Work state: %s", work_state)
+        return work_state
+
     async def testcmd(self) -> Any:
         await self.ensure_logged_in()
 
-        response = await self.device.send_command(Api="GetPresets")
-        logger.debug("Preset: %s", response)
+        response = await self.device.send_command(Api="GetWorkState")
+        logger.info("Work state: %s", response)
+
         return response

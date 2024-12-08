@@ -17,10 +17,10 @@ INCORRECT_PAIR_ID = "a1b2c1d2a2b1c2d1"
 
 async def main() -> None:
     client = await Client.create(CORRECT_PAIR_ID)
-#    await client.connect()
 
-    #    await client.doit()
-    print(await client.api.get_presets())
+    #    print(await client.api.testcmd())
+    print(await client.api.get_work_state())
+    print(await client.api.get_upgrade_state())
 
 if __name__ == "__main__":
     asyncio.run(main())
