@@ -1,5 +1,5 @@
 from .device import Device
-import logging
+from . import logger
 from dataclasses import dataclass
 from typing import Self, Any
 
@@ -105,13 +105,12 @@ class Api:
         self.device = device
         self.pair_id = pair_id
         self.logged_in = False
-        self.logger = logging.getLogger(__name__)
 
     async def login(self) -> None:
         response = await self.device.send_command(Api="Login", PhoneID=self.pair_id)
         if response["Result"] == "Success":
             self.logged_in = True
-            self.logger.info("Logged in")
+            logger.info("Logged in")
         else:
             raise Exception("Login failed", response)
 
@@ -124,7 +123,7 @@ class Api:
 
         response = await self.device.send_command(Api="GetFanInfo")
         fan_info = FanInfo.from_response(response)
-        self.logger.debug("Fan info: %s", fan_info)
+        logger.debug("Fan info: %s", fan_info)
         return fan_info
 
     async def get_version(self) -> VersionInfo:
@@ -132,7 +131,7 @@ class Api:
 
         response = await self.device.send_command(Api="GetVersion")
         version_info = VersionInfo.from_response(response)
-        self.logger.debug("Version info: %s", version_info)
+        logger.debug("Version info: %s", version_info)
         return version_info
 
     async def get_parameter(self) -> Parameters:
@@ -140,7 +139,7 @@ class Api:
 
         response = await self.device.send_command(Api="GetParameter")
         parameter_info = Parameters.from_response(response)
-        self.logger.debug("Parameter: %s", parameter_info)
+        logger.debug("Parameter: %s", parameter_info)
         return parameter_info
 
     async def get_presets(self) -> PresetList:
@@ -148,12 +147,12 @@ class Api:
 
         response = await self.device.send_command(Api="GetPresets")
         preset_list = PresetList.from_response(response)
-        self.logger.debug("Presets: %s", preset_list)
+        logger.debug("Presets: %s", preset_list)
         return preset_list
 
     async def testcmd(self) -> Any:
         await self.ensure_logged_in()
 
         response = await self.device.send_command(Api="GetPresets")
-        self.logger.debug("Preset: %s", response)
+        logger.debug("Preset: %s", response)
         return response

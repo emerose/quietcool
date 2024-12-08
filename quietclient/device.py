@@ -7,7 +7,7 @@ import asyncio
 import json
 from itertools import count, takewhile
 from typing import Iterator, Optional, Self
-import logging
+from . import logger
 
 
 class Device:
@@ -25,20 +25,26 @@ class Device:
         self.characteristic: Optional[BleakGATTCharacteristic] = None
         self.data_waiting: asyncio.Semaphore = asyncio.Semaphore(0)
         self.packet_counter: int = 0
-        self.logger = logging.getLogger(__name__)
 
-        self.logger.info("Created device for fan: %s", self.fan.name)
+        logger.info("Created device for fan: %s", self.fan.name)
 
     @classmethod
     async def find_fan(cls) -> Self:
-        fan = await BleakScanner.find_device_by_filter(
-            lambda d, ad: d.name and d.name.startswith("ATTICFAN"), timeout=3
-        )
-        if fan is None:
-            raise Exception("No fan found")
-        ret = cls(fan)
-        await ret.connect()
-        return ret
+        for attempt in range(3):
+            fan = await BleakScanner.find_device_by_filter(
+                lambda d, ad: d.name and d.name.startswith("ATTICFAN"), timeout=3
+            )
+            if fan is not None:
+                ret = cls(fan)
+                await ret.connect()
+                return ret
+
+            if attempt < 2:  # Don't sleep after last attempt
+                logger.debug(
+                    "No fan found on attempt %d, sleeping before retry...", attempt + 1)
+                await asyncio.sleep(1)
+
+        raise Exception("No fan found after 3 attempts")
 
     def sliced(self, data: bytes, n: int) -> Iterator[bytes]:
         """
@@ -48,13 +54,13 @@ class Device:
         return takewhile(len, (data[i: i + n] for i in count(0, n)))
 
     def handle_disconnect(self, _: BleakClient) -> None:
-        self.logger.info("Device was disconnected, goodbye.")
+        logger.info("Device was disconnected, goodbye.")
         self.connected = False
         for task in asyncio.all_tasks():
             task.cancel()
 
     def handle_rx(self, _: BleakGATTCharacteristic, data: bytearray) -> None:
-        self.logger.debug("received: %s", data)
+        logger.debug("received: %s", data)
         str = data.decode('utf-8')
         self.receive_buffer.write(str)
         self.data_waiting.release()
@@ -67,8 +73,8 @@ class Device:
             await self.data_waiting.acquire()
             try:
                 value = json.loads(self.receive_buffer.getvalue())
-                self.logger.debug("Received response %s in %d packets",
-                                  value, self.packet_counter)
+                logger.debug("Received response %s in %d packets",
+                             value, self.packet_counter)
                 self.packet_counter = 0
                 self.receive_buffer = StringIO()
                 return value
@@ -82,21 +88,21 @@ class Device:
             self.fan, disconnected_callback=self.handle_disconnect)
         await self.client.connect()
         self.connected = True
-        self.logger.info("Connected to %s", self.fan.name)
+        logger.info("Connected to %s", self.fan.name)
         await self.client.start_notify(Device.UUID_KEY_DATA, self.handle_rx)
-        self.logger.debug("Started notify")
+        logger.debug("Started notify")
 
         self.service = self.client.services.get_service(Device.UUID_SERVER)
         if self.service is None:
             raise Exception("Service not found")
-        self.logger.debug("Found service: %s", self.service.description)
+        logger.debug("Found service: %s", self.service.description)
 
         self.characteristic = self.service.get_characteristic(
             Device.UUID_KEY_DATA)
         if self.characteristic is None:
             raise Exception("Characteristic not found")
-        self.logger.debug("Found characteristic: %s",
-                          self.characteristic.description)
+        logger.debug("Found characteristic: %s",
+                     self.characteristic.description)
 
     async def send_message(self, message: bytes) -> None:
         if not self.connected:
@@ -106,8 +112,8 @@ class Device:
             response = await self.client.write_gatt_char(
                 self.characteristic, s, response=True
             )
-            self.logger.debug("Sent %s (%d bytes), response: %s",
-                              s, len(s), response)
+            logger.debug("Sent %s (%d bytes), response: %s",
+                         s, len(s), response)
 
     async def send_command(self, **kwargs) -> dict:
         if not self.connected:
