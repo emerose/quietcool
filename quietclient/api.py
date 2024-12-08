@@ -1,7 +1,7 @@
 from .device import Device
 import logging
 from dataclasses import dataclass
-from typing import Self
+from typing import Self, Any
 
 
 @dataclass
@@ -39,7 +39,7 @@ class VersionInfo:
 
 
 @dataclass
-class ParameterInfo:
+class Parameters:
     mode: str
     fan_type: str
     temp_high: int
@@ -69,34 +69,91 @@ class ParameterInfo:
         )
 
 
+@dataclass
+class Preset:
+    name: str
+    temp_high: int
+    temp_med: int
+    temp_low: int
+    humidity_off: int
+    humidity_on: int
+    humidity_speed: str
+
+
+@dataclass
+class PresetList:
+    presets: list[Preset]
+
+    @classmethod
+    def from_response(cls, response: dict) -> Self:
+        presets = []
+        for preset in response["Presets"]:
+            presets.append(Preset(
+                name=preset[0],
+                temp_high=preset[1],
+                temp_med=preset[2],
+                temp_low=preset[3],
+                humidity_off=preset[4],
+                humidity_on=preset[5],
+                humidity_speed=preset[6]
+            ))
+        return cls(presets=presets)
+
+
 class Api:
-    def __init__(self, device: Device) -> None:
+    def __init__(self, device: Device, pair_id: str) -> None:
         self.device = device
+        self.pair_id = pair_id
         self.logged_in = False
         self.logger = logging.getLogger(__name__)
 
-    async def login(self, pair_id: str) -> None:
-        response = await self.device.send_command(Api="Login", PhoneID=pair_id)
+    async def login(self) -> None:
+        response = await self.device.send_command(Api="Login", PhoneID=self.pair_id)
         if response["Result"] == "Success":
             self.logged_in = True
             self.logger.info("Logged in")
         else:
             raise Exception("Login failed", response)
 
+    async def ensure_logged_in(self) -> None:
+        if not self.logged_in:
+            await self.login()
+
     async def get_fan_info(self) -> FanInfo:
+        await self.ensure_logged_in()
+
         response = await self.device.send_command(Api="GetFanInfo")
         fan_info = FanInfo.from_response(response)
         self.logger.debug("Fan info: %s", fan_info)
         return fan_info
 
     async def get_version(self) -> VersionInfo:
+        await self.ensure_logged_in()
+
         response = await self.device.send_command(Api="GetVersion")
         version_info = VersionInfo.from_response(response)
         self.logger.debug("Version info: %s", version_info)
         return version_info
 
-    async def get_parameter(self) -> ParameterInfo:
+    async def get_parameter(self) -> Parameters:
+        await self.ensure_logged_in()
+
         response = await self.device.send_command(Api="GetParameter")
-        parameter_info = ParameterInfo.from_response(response)
+        parameter_info = Parameters.from_response(response)
         self.logger.debug("Parameter: %s", parameter_info)
         return parameter_info
+
+    async def get_presets(self) -> PresetList:
+        await self.ensure_logged_in()
+
+        response = await self.device.send_command(Api="GetPresets")
+        preset_list = PresetList.from_response(response)
+        self.logger.debug("Presets: %s", preset_list)
+        return preset_list
+
+    async def testcmd(self) -> Any:
+        await self.ensure_logged_in()
+
+        response = await self.device.send_command(Api="GetPresets")
+        self.logger.debug("Preset: %s", response)
+        return response
