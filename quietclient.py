@@ -30,7 +30,9 @@ async def main(command: str, api_id: Optional[str] = None) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Quiet Client')
     parser.add_argument('command', nargs='?', default='info',
-                        help='Command to execute (info, pair)')
+                        help='Command to execute:\n'
+                             '  info: Dumps detailed information about the connected fan (default)\n'
+                             '  pair: Pairs the client with a fan (fan must be in pairing mode)')
     parser.add_argument('--id', help='API ID string', default=None)
     parser.add_argument(
         '--log-level',
