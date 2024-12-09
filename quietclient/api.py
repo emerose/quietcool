@@ -328,7 +328,20 @@ class Api:
         self.logged_in = False
 
     async def login(self) -> None:
+        """
+        Login to the fan device.
+
+        Returns:
+            None
+
+        Raises:
+            Exception: If the login fails
+        """
         response = await self.device.send_command(Api="Login", PhoneID=self.pair_id)
+        # response will be something like:
+        # {"Api": "Login", "Result": "Success", "PairState": "No"}
+        # or
+        # {"Api": "Login", "Result": "Fail", "PairState": "No"}
         if response["Result"] == "Success":
             self.logged_in = True
             logger.info("Logged in")
@@ -336,6 +349,15 @@ class Api:
             raise Exception("Login failed", response)
 
     async def ensure_logged_in(self) -> None:
+        """
+        Ensure the client is logged in.
+
+        Returns:
+            None
+
+        Raises:
+            Exception: If the login fails
+        """
         if not self.logged_in:
             await self.login()
 

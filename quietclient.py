@@ -16,7 +16,7 @@ INCORRECT_PAIR_ID = "a1b2c1d2a2b1c2d1"
 
 
 async def main() -> None:
-    client = await Client.create(CORRECT_PAIR_ID)
+    client = await Client.create(INCORRECT_PAIR_ID)
 
    #    print(await client.api.testcmd())
     await client.doit()
