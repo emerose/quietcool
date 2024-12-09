@@ -1,26 +1,35 @@
 import asyncio
 import logging
+import argparse
+from typing import Optional
 
 from quietclient.client import Client
 
 # Add logger configuration at the top
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
 
 
-CORRECT_PAIR_ID = "aa4a737ffd756c6d"
-INCORRECT_PAIR_ID = "a1b2c1d2a2b1c2d1"
+async def main(api_id: Optional[str] = None) -> None:
+    client = await Client.create(api_id=api_id)
 
-
-async def main() -> None:
-    client = await Client.create(CORRECT_PAIR_ID)
-
-   #    print(await client.api.testcmd())
     await client.doit()
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    parser = argparse.ArgumentParser(description='Quiet Client')
+    parser.add_argument('--id', help='API ID string', default=None)
+    parser.add_argument(
+        '--log-level',
+        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
+        default='INFO',
+        help='Set the logging level'
+    )
+    args = parser.parse_args()
+
+    # Configure logging with user-specified level
+    logging.basicConfig(
+        level=getattr(logging, args.log_level),
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+
+    asyncio.run(main(args.id))

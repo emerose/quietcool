@@ -50,3 +50,6 @@ dmypy.json
 
 # Mac OS
 .DS_Store 
+
+# QuietCool
+.quietcool

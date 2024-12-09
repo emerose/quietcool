@@ -5,6 +5,11 @@ from typing import Self, Any, TypeAlias
 from enum import Enum
 
 
+class LoginError(Exception):
+    """Raised when login to the fan device fails."""
+    pass
+
+
 @dataclass
 class FanInfo:
     """
@@ -346,7 +351,7 @@ class Api:
             None
 
         Raises:
-            Exception: If the login fails
+            LoginError: If the login fails
         """
         response = await self.device.send_command(Api="Login", PhoneID=self.pair_id)
         # response will be something like:
@@ -357,7 +362,7 @@ class Api:
             self.logged_in = True
             logger.info("Logged in")
         else:
-            raise Exception("Login failed", response)
+            raise LoginError(f"Login failed: {response}")
 
     async def ensure_logged_in(self) -> None:
         """
