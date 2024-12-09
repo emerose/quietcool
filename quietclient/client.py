@@ -74,6 +74,20 @@ class Client:
     async def login(self) -> None:
         await self.api.login()
 
+    async def get_info(self) -> dict:
+        faninfo = await self.api.get_fan_info()
+        params = await self.api.get_parameters()
+        version = await self.api.get_version()
+        presets = await self.api.get_presets()
+        workstate = await self.api.get_work_state()
+        return {
+            "faninfo": faninfo,
+            "params": params,
+            "version": version,
+            "presets": presets,
+            "workstate": workstate,
+        }
+
     async def doit(self) -> None:
         # the android app does this:
         # login

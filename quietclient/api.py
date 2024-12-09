@@ -1,13 +1,21 @@
 from .device import Device
 from . import logger
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from typing import Self, Any, TypeAlias
 from enum import Enum
+import json
 
 
 class LoginError(Exception):
     """Raised when login to the fan device fails."""
     pass
+
+
+class DataclassJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if hasattr(obj, '__dataclass_fields__'):
+            return asdict(obj)
+        return super().default(obj)
 
 
 @dataclass
@@ -391,7 +399,7 @@ class Api:
         logger.debug("Fan info: %s", fan_info)
         return fan_info
 
-    async def get_parameter(self) -> Parameters:
+    async def get_parameters(self) -> Parameters:
         """
         Retrieve current fan parameters.
 
