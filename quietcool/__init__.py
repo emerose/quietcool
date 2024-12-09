@@ -1,4 +1,4 @@
-# QuietClient
+# QuietCool
 
 import logging
 

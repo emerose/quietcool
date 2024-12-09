@@ -4,8 +4,8 @@ import json
 import argparse
 from typing import Optional
 
-from quietclient.client import Client
-from quietclient.api import DataclassJSONEncoder
+from quietcool.client import Client
+from quietcool.api import DataclassJSONEncoder
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ async def main(command: str, api_id: Optional[str] = None) -> None:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Quiet Client')
+    parser = argparse.ArgumentParser(description='Quietcool Client')
     parser.add_argument('command', nargs='?', default='info',
                         help='Command to execute:\n'
                              '  info: Dumps detailed information about the connected fan (default)\n'
