@@ -47,14 +47,29 @@ class Client:
         # get fan info (again)
         # get work state (mode is Idle)
         # set guide setup = no
-        # set mode mode=TH
-        # get work state (again) now mode is TH
-        # set mode mode=IDLE
-        # get work state (again) mode is Idle again
-        # set mode mode=Timer
-        # get work state (again) now mode is Timer
-        # get remain time
-        # set mode mode=Idle
 
         workstate = await self.api.get_work_state()
         print(workstate)
+
+# activate smart mode looks like:
+# set mode mode=TH
+# get work state (again) now mode is TH
+
+# activate timer mode looks like:
+# set mode mode=Timer
+# get work state (again) now mode is Timer
+# get remain time
+
+# turning either of those modes off looks like:
+# set mode mode=Idle
+# get work state; now mode is Idle
+
+# setting fan info looks like:
+# GetFanInfo
+# SetFanInfo: response has Flag=TRUE
+# GetFanInfo: response is updated
+
+# upgrade firmware looks like:
+# Upgrade with URL; response has Flag=TRUE
+# SetRouter; response has Flag=TRUE
+# poll GetUpgradeState for updates
