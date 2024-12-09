@@ -51,15 +51,6 @@ class PairModeResponse:
 
 
 @dataclass
-class PairResponse:
-    response: dict
-
-    @classmethod
-    def from_response(cls, response: dict) -> Self:
-        return cls(response=response)
-
-
-@dataclass
 class Parameters:
     """
     Fan operating parameters.
@@ -340,6 +331,9 @@ class Api:
     """
     API client for interacting with the fan device.
 
+    Note that most of these methods are untested, and are just
+    reverse-engineered based on BLE sniffing and the Android app. Be careful!
+
     Attributes:
         device: The fan device instance
         pair_id: The pairing ID for authentication
@@ -362,15 +356,24 @@ class Api:
             LoginError: If the login fails
         """
         response = await self.device.send_command(Api="Login", PhoneID=self.pair_id)
-        # response will be something like:
-        # {"Api": "Login", "Result": "Success", "PairState": "No"}
-        # or
-        # {"Api": "Login", "Result": "Fail", "PairState": "No"}
+
         if response["Result"] == "Success":
             self.logged_in = True
             logger.info("Logged in")
         else:
             raise LoginError(f"Login failed: {response}")
+
+    async def send_login(self) -> dict:
+        """
+        Send a login command to the fan device.
+
+        Returns:
+            dict: Response from the fan device with keys:
+                - Api: Always "Login"
+                - Result: "Success" or "Fail" 
+                - PairState: "No" or "Yes" indicating if device is in pairing mode
+        """
+        return await self.device.send_command(Api="Login", PhoneID=self.pair_id)
 
     async def ensure_logged_in(self) -> None:
         """
@@ -489,7 +492,7 @@ class Api:
         logger.debug("Work state: %s", work_state)
         return work_state
 
-    async def pair(self, pair_id: str) -> PairResponse:
+    async def pair(self, pair_id: str) -> bool:
         """
         Add a new pairing ID to the fan. Fan must be in pairing mode already.
 
@@ -497,11 +500,10 @@ class Api:
             pair_id: The pairing ID to add to the fan
 
         Returns:
-            PairResponse containing the result
+            bool: True if pairing was successful, False otherwise
         """
-        await self.ensure_logged_in()
         response = await self.device.send_command(Api="Pair", PhoneID=pair_id)
-        return PairResponse.from_response(response)
+        return response.get('Result') == 'Success'
 
     async def pair_mode(self) -> PairModeResponse:
         """

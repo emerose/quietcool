@@ -71,8 +71,20 @@ class Client:
         raise ValueError(
             "No API ID provided and none found in environment or config files")
 
-    async def login(self) -> None:
-        await self.api.login()
+    async def pair(self) -> None:
+        login_result = await self.api.send_login()
+        if login_result["Result"] == "Success":
+            print("Already paired")
+            return
+        elif login_result["PairState"] == "No":
+            print("Not in pairing mode")
+            return
+        print("Pairing...")
+        result = await self.api.pair(self.api_id)
+        if result:
+            print("Pairing successful")
+        else:
+            print("Pairing failed")
 
     async def get_info(self) -> dict:
         faninfo = await self.api.get_fan_info()
@@ -87,20 +99,6 @@ class Client:
             "presets": presets,
             "workstate": workstate,
         }
-
-    async def doit(self) -> None:
-        # the android app does this:
-        # login
-        # get fan info
-        # get parameters
-        # get version
-        # get presets
-        # get fan info (again)
-        # get work state (mode is Idle)
-        # set guide setup = no
-
-        workstate = await self.api.get_work_state()
-        print(workstate)
 
 # activate smart mode looks like:
 # set mode mode=TH
