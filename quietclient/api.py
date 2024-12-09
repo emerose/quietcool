@@ -2,10 +2,19 @@ from .device import Device
 from . import logger
 from dataclasses import dataclass
 from typing import Self, Any, TypeAlias
+from enum import Enum
 
 
 @dataclass
 class FanInfo:
+    """
+    Information about a fan device.
+
+    Attributes:
+        name: The fan's name
+        model: The fan's model number
+        serial_num: The fan's serial number
+    """
     name: str
     model: str
     serial_num: str
@@ -21,6 +30,16 @@ class FanInfo:
 
 @dataclass
 class VersionInfo:
+    """
+    Version information for the fan.
+
+    Attributes:
+        version: Software version
+        protect_temp: Protection temperature threshold
+        create_date: Creation date
+        create_mode: Creation mode
+        hw_version: Hardware version
+    """
     version: str
     protect_temp: int
     create_date: str
@@ -40,6 +59,22 @@ class VersionInfo:
 
 @dataclass
 class Parameters:
+    """
+    Fan operating parameters.
+
+    Attributes:
+        mode: Current operating mode
+        fan_type: Type of fan
+        temp_high: High temperature threshold
+        temp_medium: Medium temperature threshold
+        temp_low: Low temperature threshold
+        humidity_high: High humidity threshold
+        humidity_low: Low humidity threshold
+        humidity_range: Humidity range setting
+        hour: Hour setting
+        minute: Minute setting
+        time_range: Time range setting
+    """
     mode: str
     fan_type: str
     temp_high: int
@@ -71,6 +106,18 @@ class Parameters:
 
 @dataclass
 class Preset:
+    """
+    Fan preset configuration.
+
+    Attributes:
+        name: Preset name
+        temp_high: High temperature threshold
+        temp_med: Medium temperature threshold
+        temp_low: Low temperature threshold
+        humidity_off: Humidity off threshold
+        humidity_on: Humidity on threshold
+        humidity_speed: Fan speed for humidity control
+    """
     name: str
     temp_high: int
     temp_med: int
@@ -97,6 +144,14 @@ PresetList: TypeAlias = list[Preset]
 
 @dataclass
 class RemainTime:
+    """
+    Remaining time information. (???)
+
+    Attributes:
+        hours: Hours remaining
+        minutes: Minutes remaining
+        seconds: Seconds remaining
+    """
     hours: int
     minutes: int
     seconds: int
@@ -123,6 +178,16 @@ class UpgradeState:
 
 @dataclass
 class WorkState:
+    """
+    Current working state of the fan.
+
+    Attributes:
+        mode: Current operating mode
+        range: Operating range
+        sensor_state: State of the sensors
+        temperature: Current temperature
+        humidity: Current humidity percentage
+    """
     mode: str
     range: str
     sensor_state: str
@@ -140,7 +205,123 @@ class WorkState:
         )
 
 
+@dataclass
+class PairResponse:
+    response: dict
+
+    @classmethod
+    def from_response(cls, response: dict) -> Self:
+        return cls(response=response)
+
+
+@dataclass
+class PairModeResponse:
+    response: dict
+
+    @classmethod
+    def from_response(cls, response: dict) -> Self:
+        return cls(response=response)
+
+
+@dataclass
+class ResetResponse:
+    response: dict
+
+    @classmethod
+    def from_response(cls, response: dict) -> Self:
+        return cls(response=response)
+
+
+@dataclass
+class SetFanInfoResponse:
+    response: dict
+
+    @classmethod
+    def from_response(cls, response: dict) -> Self:
+        return cls(response=response)
+
+
+@dataclass
+class SetGuideSetupResponse:
+    response: dict
+
+    @classmethod
+    def from_response(cls, response: dict) -> Self:
+        return cls(response=response)
+
+
+@dataclass
+class SetModeResponse:
+    response: dict
+
+    @classmethod
+    def from_response(cls, response: dict) -> Self:
+        return cls(response=response)
+
+
+@dataclass
+class SetPresetsResponse:
+    response: dict
+
+    @classmethod
+    def from_response(cls, response: dict) -> Self:
+        return cls(response=response)
+
+
+@dataclass
+class SetRouterResponse:
+    response: dict
+
+    @classmethod
+    def from_response(cls, response: dict) -> Self:
+        return cls(response=response)
+
+
+@dataclass
+class SetTempHumidityResponse:
+    response: dict
+
+    @classmethod
+    def from_response(cls, response: dict) -> Self:
+        return cls(response=response)
+
+
+@dataclass
+class SetTimeResponse:
+    response: dict
+
+    @classmethod
+    def from_response(cls, response: dict) -> Self:
+        return cls(response=response)
+
+
+class GuideSetup(str, Enum):
+    """Guide setup state options."""
+    YES = "YES"
+    NO = "NO"
+
+
+class Mode(str, Enum):
+    """Fan operating mode options."""
+    IDLE = "Idle"
+
+
+class HumidityRange(str, Enum):
+    """Humidity range setting options."""
+    HIGH = "HIGH"
+    LOW = "LOW"
+
+
 class Api:
+    """
+    API client for interacting with the fan device.
+
+    Attributes:
+        device: The fan device instance
+        pair_id: The pairing ID for authentication
+        logged_in: Whether the client is currently logged in
+    """
+
     def __init__(self, device: Device, pair_id: str) -> None:
         self.device = device
         self.pair_id = pair_id
@@ -159,6 +340,12 @@ class Api:
             await self.login()
 
     async def get_fan_info(self) -> FanInfo:
+        """
+        Retrieve information about the fan.
+
+        Returns:
+            FanInfo object containing name, model, and serial number
+        """
         await self.ensure_logged_in()
 
         response = await self.device.send_command(Api="GetFanInfo")
@@ -167,6 +354,12 @@ class Api:
         return fan_info
 
     async def get_parameter(self) -> Parameters:
+        """
+        Retrieve current fan parameters.
+
+        Returns:
+            Parameters object containing current fan settings
+        """
         await self.ensure_logged_in()
 
         response = await self.device.send_command(Api="GetParameter")
@@ -175,6 +368,12 @@ class Api:
         return parameter_info
 
     async def get_presets(self) -> PresetList:
+        """
+        Retrieve list of fan presets.
+
+        Returns:
+            List of Preset objects
+        """
         await self.ensure_logged_in()
 
         response = await self.device.send_command(Api="GetPresets")
@@ -184,6 +383,14 @@ class Api:
         return presets
 
     async def get_remain_time(self) -> RemainTime:
+        """
+        Retrieve remaining time information.
+
+        No idea what "remaining time" is for.
+
+        Returns:
+            RemainTime object with hours, minutes, and seconds
+        """
         await self.ensure_logged_in()
 
         response = await self.device.send_command(Api="GetRemainTime")
@@ -192,6 +399,14 @@ class Api:
         return remain_time
 
     async def get_upgrade_state(self) -> UpgradeState:
+        """
+        Retrieve the current upgrade state.
+
+        No idea what this refers to
+
+        Returns:
+            UpgradeState object containing the current state
+        """
         await self.ensure_logged_in()
 
         response = await self.device.send_command(Api="GetUpgradeState")
@@ -200,6 +415,12 @@ class Api:
         return upgrade_state
 
     async def get_version(self) -> VersionInfo:
+        """
+        Retrieve version information.
+
+        Returns:
+            VersionInfo object containing version details
+        """
         await self.ensure_logged_in()
 
         response = await self.device.send_command(Api="GetVersion")
@@ -208,6 +429,12 @@ class Api:
         return version_info
 
     async def get_work_state(self) -> WorkState:
+        """
+        Retrieve current working state.
+
+        Returns:
+            WorkState object containing current operational status
+        """
         await self.ensure_logged_in()
 
         response = await self.device.send_command(Api="GetWorkState")
@@ -215,10 +442,169 @@ class Api:
         logger.debug("Work state: %s", work_state)
         return work_state
 
-    async def testcmd(self) -> Any:
+    async def pair(self, pair_id: str) -> PairResponse:
+        """
+        Add a new pairing ID to the fan. Fan must be in pairing mode already.
+
+        Args:
+            pair_id: The pairing ID to add to the fan
+
+        Returns:
+            PairResponse containing the result
+        """
         await self.ensure_logged_in()
+        response = await self.device.send_command(Api="Pair", PhoneID=pair_id)
+        return PairResponse.from_response(response)
 
-        response = await self.device.send_command(Api="GetWorkState")
-        logger.info("Work state: %s", response)
+    async def pair_mode(self) -> PairModeResponse:
+        """
+        Tell the fan to enter pairing mode.
 
-        return response
+        Returns:
+            PairModeResponse containing the result
+        """
+        await self.ensure_logged_in()
+        response = await self.device.send_command(Api="PairMode")
+        return PairModeResponse.from_response(response)
+
+    async def reset(self) -> ResetResponse:
+        """
+        Reset the fan. (???)
+
+        Unclear if this resets the device or just something about BLE
+
+        Returns:
+            ResetResponse containing the result
+        """
+        await self.ensure_logged_in()
+        response = await self.device.send_command(Api="Reset")
+        return ResetResponse.from_response(response)
+
+    async def set_fan_info(self, name: str, model: str, serial_num: str) -> SetFanInfoResponse:
+        """
+        Set fan information.
+
+        Args:
+            name: New fan name
+            model: Fan model number
+            serial_num: Fan serial number
+
+        Returns:
+            SetFanInfoResponse containing the result
+        """
+        await self.ensure_logged_in()
+        response = await self.device.send_command(
+            Api="SetFanInfo",
+            Name=name,
+            Model=model,
+            SerialNum=serial_num
+        )
+        return SetFanInfoResponse.from_response(response)
+
+    async def set_guide_setup(self, guide_setup: GuideSetup) -> SetGuideSetupResponse:
+        """
+        Set the guide setup state.
+
+        Args:
+            guide_setup: The guide setup state to set (GuideSetup.YES or GuideSetup.NO)
+
+        Returns:
+            SetGuideSetupResponse containing the result
+        """
+        await self.ensure_logged_in()
+        response = await self.device.send_command(Api="SetGuideSetup", GuideSetup=guide_setup)
+        return SetGuideSetupResponse.from_response(response)
+
+    async def set_mode(self, mode: Mode) -> SetModeResponse:
+        """
+        Set the fan's operating mode.
+
+        Args:
+            mode: The mode to set (e.g., Mode.IDLE)
+
+        Returns:
+            SetModeResponse containing the result
+        """
+        await self.ensure_logged_in()
+        response = await self.device.send_command(Api="SetMode", Mode=mode)
+        return SetModeResponse.from_response(response)
+
+    async def set_presets(self) -> SetPresetsResponse:
+        await self.ensure_logged_in()
+        response = await self.device.send_command(Api="SetPresets")
+        return SetPresetsResponse.from_response(response)
+
+    async def set_router(self, ssid: str, password: str) -> SetRouterResponse:
+        """
+        Set the WiFi router credentials. (???)
+
+        Args:
+            ssid: The WiFi network SSID
+            password: The WiFi network password
+
+        Returns:
+            SetRouterResponse containing the result
+        """
+        await self.ensure_logged_in()
+        response = await self.device.send_command(
+            Api="SetRouter",
+            Ssid=ssid,
+            Password=password
+        )
+        return SetRouterResponse.from_response(response)
+
+    async def set_temp_humidity(
+        self,
+        temp_high: int,
+        temp_medium: int,
+        temp_low: int,
+        humidity_high: int,
+        humidity_low: int,
+        humidity_range: HumidityRange
+    ) -> SetTempHumidityResponse:
+        """
+        Set temperature and humidity parameters.
+
+        Args:
+            temp_high: High temperature threshold
+            temp_medium: Medium temperature threshold
+            temp_low: Low temperature threshold
+            humidity_high: High humidity threshold
+            humidity_low: Low humidity threshold
+            humidity_range: Humidity range setting (HumidityRange.HIGH or HumidityRange.LOW)
+
+        Returns:
+            SetTempHumidityResponse containing the result
+        """
+        await self.ensure_logged_in()
+        response = await self.device.send_command(
+            Api="SetTempHumidity",
+            SetTemp_H=temp_high,
+            SetTemp_M=temp_medium,
+            SetTemp_L=temp_low,
+            SetHum_H=humidity_high,
+            SetHum_L=humidity_low,
+            SetHum_Range=humidity_range
+        )
+        return SetTempHumidityResponse.from_response(response)
+
+    async def set_time(self, hour: int, minute: int, time_range: str) -> SetTimeResponse:
+        """
+        Set the time parameters.
+
+        Args:
+            hour: Hour value (0-23)
+            minute: Minute value (0-59)
+            time_range: Time range setting
+
+        Returns:
+            SetTimeResponse containing the result
+        """
+        await self.ensure_logged_in()
+        response = await self.device.send_command(
+            Api="SetTime",
+            SetHour=hour,
+            SetMinute=minute,
+            SetTime_Range=time_range
+        )
+        return SetTimeResponse.from_response(response)
