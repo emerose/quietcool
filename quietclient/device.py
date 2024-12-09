@@ -11,9 +11,9 @@ from . import logger
 
 
 class Device:
-    UUID_SERVER = "000000ff-0000-1000-8000-00805f9b34fb"
-    UUID_KEY_DATA = "0000ff01-0000-1000-8000-00805f9b34fb"
-    UUID_KEY_NOTIFY = "00002902-0000-1000-8000-00805f9b34fb"
+    SERVICE_UUID = "000000ff-0000-1000-8000-00805f9b34fb"
+    CHARACTERISTIC_UUID = "0000ff01-0000-1000-8000-00805f9b34fb"
+#    UUID_KEY_NOTIFY = "00002902-0000-1000-8000-00805f9b34fb"
 
     def __init__(self, fan: BLEDevice) -> None:
         self.fan: BLEDevice = fan
@@ -66,6 +66,24 @@ class Device:
         self.data_waiting.release()
 
     async def get_response(self) -> dict:
+        """
+        Waits for and processes incoming an JSON response from the fan device.
+
+        This method continuously accumulates received data packets until a complete,
+        valid JSON message can be parsed. It uses a semaphore (self.data_waiting)
+        to coordinate with the receive callback.
+
+        Returns:
+            dict: The parsed JSON response from the fan device.
+
+        Raises:
+            Exception: If the device is not connected.
+            json.JSONDecodeError: Handled internally for partial messages.
+
+        Note:
+            - Resets the packet counter and receive buffer after successful parsing
+            - Will keep trying to parse until a complete JSON message is received
+        """
         if not self.connected:
             raise Exception("Not connected")
 
@@ -89,22 +107,34 @@ class Device:
         await self.client.connect()
         self.connected = True
         logger.info("Connected to %s", self.fan.name)
-        await self.client.start_notify(Device.UUID_KEY_DATA, self.handle_rx)
+        await self.client.start_notify(Device.CHARACTERISTIC_UUID, self.handle_rx)
         logger.debug("Started notify")
 
-        self.service = self.client.services.get_service(Device.UUID_SERVER)
+        self.service = self.client.services.get_service(Device.SERVICE_UUID)
         if self.service is None:
             raise Exception("Service not found")
         logger.debug("Found service: %s", self.service.description)
 
         self.characteristic = self.service.get_characteristic(
-            Device.UUID_KEY_DATA)
+            Device.CHARACTERISTIC_UUID)
         if self.characteristic is None:
             raise Exception("Characteristic not found")
         logger.debug("Found characteristic: %s",
                      self.characteristic.description)
 
     async def send_message(self, message: bytes) -> None:
+        """
+        Sends a raw byte message to the fan device, handling chunking for large messages.
+
+        The message is automatically split into chunks based on the maximum write size
+        supported by the characteristic (max_write_without_response_size).
+
+        Args:
+            message (bytes): The raw message to send to the device.
+
+        Raises:
+            Exception: If the device is not connected.
+        """
         if not self.connected:
             raise Exception("Not connected")
 
@@ -116,6 +146,26 @@ class Device:
                          s, len(s), response)
 
     async def send_command(self, **kwargs) -> dict:
+        """
+        Sends a command to the device as a JSON message and waits for the response.
+
+        This method converts the provided keyword arguments into a JSON message,
+        sends it to the device, and waits for a response.
+
+        Args:
+            **kwargs: Keyword arguments that will be converted to a JSON message.
+                     These represent the command and its parameters to send to the fan.
+
+        Returns:
+            dict: The parsed JSON response from the fan device.
+
+        Raises:
+            Exception: If the device is not connected.
+            json.JSONDecodeError: If the response cannot be parsed as JSON.
+
+        Example:
+            response = await device.send_command(command="SetMode", Mode="Idle")
+        """
         if not self.connected:
             raise Exception("Not connected")
 
