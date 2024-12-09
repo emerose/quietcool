@@ -1,0 +1,4 @@
+bleak>=0.21.1
+build>=1.0.3
+twine>=4.0.2
+pytest>=7.4.0 
