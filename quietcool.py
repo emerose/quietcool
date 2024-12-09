@@ -54,8 +54,8 @@ if __name__ == "__main__":
     parser.add_argument(
         '--log-level',
         choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-        default='INFO',
-        help='Set the logging level'
+        default='WARNING',
+        help='Set the logging level (default: WARNING)'
     )
     args = parser.parse_args()
 

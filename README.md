@@ -154,7 +154,7 @@ Commands:
 Options:
 
 - `--id ID`: API ID string
-- `--log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}`: Set logging level (default: INFO)
+- `--log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}`: Set logging level (default: WARNING)
 - `-h, --help`: Show help message
 
 ## License
