@@ -1,7 +1,7 @@
 from .device import Device
 from . import logger
 from dataclasses import dataclass, asdict
-from typing import Self, Any, TypeAlias
+from typing import Self, TypeAlias
 from enum import Enum
 import json
 

@@ -98,7 +98,7 @@ class Device:
                 self.packet_counter = 0
                 self.receive_buffer = StringIO()
                 return value
-            except json.JSONDecodeError as e:
+            except json.JSONDecodeError:
                 # message is not complete yet
                 self.packet_counter += 1
                 continue
