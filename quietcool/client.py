@@ -20,7 +20,9 @@ class Client:
         self.api = Api(self.device, self.api_id)
 
     @classmethod
-    async def create(cls, api_id: Optional[str] = None, device: Optional[Device] = None) -> Self:
+    async def create(
+        cls, api_id: Optional[str] = None, device: Optional[Device] = None
+    ) -> Self:
         """
         Create a new Client instance.
 
@@ -69,7 +71,8 @@ class Client:
                     return api_id
 
         raise ValueError(
-            "No API ID provided and none found in environment or config files")
+            "No API ID provided and none found in environment or config files"
+        )
 
     async def pair(self) -> None:
         login_result = await self.api.send_login()
@@ -99,6 +102,7 @@ class Client:
             "presets": presets,
             "workstate": workstate,
         }
+
 
 # activate smart mode looks like:
 # set mode mode=TH

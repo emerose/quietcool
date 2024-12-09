@@ -8,12 +8,13 @@ import json
 
 class LoginError(Exception):
     """Raised when login to the fan device fails."""
+
     pass
 
 
 class DataclassJSONEncoder(json.JSONEncoder):
     def default(self, obj):
-        if hasattr(obj, '__dataclass_fields__'):
+        if hasattr(obj, "__dataclass_fields__"):
             return asdict(obj)
         return super().default(obj)
 
@@ -28,6 +29,7 @@ class FanInfo:
         model: The fan's model number
         serial_num: The fan's serial number
     """
+
     name: str
     model: str
     serial_num: str
@@ -35,9 +37,9 @@ class FanInfo:
     @classmethod
     def from_response(cls, response: dict) -> Self:
         return cls(
-            name=response['Name'],
-            model=response['Model'],
-            serial_num=response['SerialNum']
+            name=response["Name"],
+            model=response["Model"],
+            serial_num=response["SerialNum"],
         )
 
 
@@ -68,6 +70,7 @@ class Parameters:
         minute: Minute setting
         time_range: Time range setting
     """
+
     mode: str
     fan_type: str
     temp_high: int
@@ -83,17 +86,17 @@ class Parameters:
     @classmethod
     def from_response(cls, response: dict) -> Self:
         return cls(
-            mode=response['Mode'],
-            fan_type=response['FanType'],
-            temp_high=response['GetTemp_H'],
-            temp_medium=response['GetTemp_M'],
-            temp_low=response['GetTemp_L'],
-            humidity_high=response['GetHum_H'],
-            humidity_low=response['GetHum_L'],
-            humidity_range=response['GetHum_Range'],
-            hour=response['GetHour'],
-            minute=response['GetMinute'],
-            time_range=response['GetTime_Range']
+            mode=response["Mode"],
+            fan_type=response["FanType"],
+            temp_high=response["GetTemp_H"],
+            temp_medium=response["GetTemp_M"],
+            temp_low=response["GetTemp_L"],
+            humidity_high=response["GetHum_H"],
+            humidity_low=response["GetHum_L"],
+            humidity_range=response["GetHum_Range"],
+            hour=response["GetHour"],
+            minute=response["GetMinute"],
+            time_range=response["GetTime_Range"],
         )
 
 
@@ -111,6 +114,7 @@ class Preset:
         humidity_on: Humidity on threshold
         humidity_speed: Fan speed for humidity control
     """
+
     name: str
     temp_high: int
     temp_med: int
@@ -128,7 +132,7 @@ class Preset:
             temp_low=response[3],
             humidity_off=response[4],
             humidity_on=response[5],
-            humidity_speed=response[6]
+            humidity_speed=response[6],
         )
 
 
@@ -145,6 +149,7 @@ class RemainTime:
         minutes: Minutes remaining
         seconds: Seconds remaining
     """
+
     hours: int
     minutes: int
     seconds: int
@@ -152,9 +157,9 @@ class RemainTime:
     @classmethod
     def from_response(cls, response: dict) -> Self:
         return cls(
-            hours=response['RemainHour'],
-            minutes=response['RemainMinute'],
-            seconds=response['RemainSecond']
+            hours=response["RemainHour"],
+            minutes=response["RemainMinute"],
+            seconds=response["RemainSecond"],
         )
 
 
@@ -236,9 +241,7 @@ class UpgradeResponse:
 
     @classmethod
     def from_response(cls, response: dict) -> Self:
-        return cls(
-            flag=response['Flag']
-        )
+        return cls(flag=response["Flag"])
 
 
 @dataclass
@@ -247,9 +250,7 @@ class UpgradeState:
 
     @classmethod
     def from_response(cls, response: dict) -> Self:
-        return cls(
-            state=response['State']
-        )
+        return cls(state=response["State"])
 
 
 @dataclass
@@ -264,6 +265,7 @@ class VersionInfo:
         create_mode: Creation mode
         hw_version: Hardware version
     """
+
     version: str
     protect_temp: int
     create_date: str
@@ -277,7 +279,7 @@ class VersionInfo:
             protect_temp=response["ProtectTemp"],
             create_date=response["Create_Date"],
             create_mode=response["Create_Mode"],
-            hw_version=response["HW_Version"]
+            hw_version=response["HW_Version"],
         )
 
 
@@ -293,6 +295,7 @@ class WorkState:
         temperature: Current temperature
         humidity: Current humidity percentage
     """
+
     mode: str
     range: str
     sensor_state: str
@@ -302,27 +305,30 @@ class WorkState:
     @classmethod
     def from_response(cls, response: dict) -> Self:
         return cls(
-            mode=response['Mode'],
-            range=response['Range'],
-            sensor_state=response['SensorState'],
-            temperature=response['Temp_Sample'] / 10,
-            humidity=response['Humidity_Sample']
+            mode=response["Mode"],
+            range=response["Range"],
+            sensor_state=response["SensorState"],
+            temperature=response["Temp_Sample"] / 10,
+            humidity=response["Humidity_Sample"],
         )
 
 
 class GuideSetup(str, Enum):
     """Guide setup state options."""
+
     YES = "YES"
     NO = "NO"
 
 
 class Mode(str, Enum):
     """Fan operating mode options."""
+
     IDLE = "Idle"
 
 
 class HumidityRange(str, Enum):
     """Humidity range setting options."""
+
     HIGH = "HIGH"
     LOW = "LOW"
 
@@ -370,7 +376,7 @@ class Api:
         Returns:
             dict: Response from the fan device with keys:
                 - Api: Always "Login"
-                - Result: "Success" or "Fail" 
+                - Result: "Success" or "Fail"
                 - PairState: "No" or "Yes" indicating if device is in pairing mode
         """
         return await self.device.send_command(Api="Login", PhoneID=self.pair_id)
@@ -425,10 +431,9 @@ class Api:
         """
         await self.ensure_logged_in()
 
-# TODO: the android app passes "FanType":"THREE" here
+        # TODO: the android app passes "FanType":"THREE" here
         response = await self.device.send_command(Api="GetPresets")
-        presets = [Preset.from_response(preset)
-                   for preset in response["Presets"]]
+        presets = [Preset.from_response(preset) for preset in response["Presets"]]
         logger.debug("Presets: %s", presets)
         return presets
 
@@ -503,7 +508,7 @@ class Api:
             bool: True if pairing was successful, False otherwise
         """
         response = await self.device.send_command(Api="Pair", PhoneID=pair_id)
-        return response.get('Result') == 'Success'
+        return response.get("Result") == "Success"
 
     async def pair_mode(self) -> PairModeResponse:
         """
@@ -529,7 +534,9 @@ class Api:
         response = await self.device.send_command(Api="Reset")
         return ResetResponse.from_response(response)
 
-    async def set_fan_info(self, name: str, model: str, serial_num: str) -> SetFanInfoResponse:
+    async def set_fan_info(
+        self, name: str, model: str, serial_num: str
+    ) -> SetFanInfoResponse:
         """
         Set fan information.
 
@@ -543,10 +550,7 @@ class Api:
         """
         await self.ensure_logged_in()
         response = await self.device.send_command(
-            Api="SetFanInfo",
-            Name=name,
-            Model=model,
-            SerialNum=serial_num
+            Api="SetFanInfo", Name=name, Model=model, SerialNum=serial_num
         )
         return SetFanInfoResponse.from_response(response)
 
@@ -561,7 +565,9 @@ class Api:
             SetGuideSetupResponse containing the result
         """
         await self.ensure_logged_in()
-        response = await self.device.send_command(Api="SetGuideSetup", GuideSetup=guide_setup)
+        response = await self.device.send_command(
+            Api="SetGuideSetup", GuideSetup=guide_setup
+        )
         return SetGuideSetupResponse.from_response(response)
 
     # TODO: the android app passes "Mode":"TH" here
@@ -599,9 +605,7 @@ class Api:
         """
         await self.ensure_logged_in()
         response = await self.device.send_command(
-            Api="SetRouter",
-            Ssid=ssid,
-            Password=password
+            Api="SetRouter", Ssid=ssid, Password=password
         )
         return SetRouterResponse.from_response(response)
 
@@ -612,7 +616,7 @@ class Api:
         temp_low: int,
         humidity_high: int,
         humidity_low: int,
-        humidity_range: HumidityRange
+        humidity_range: HumidityRange,
     ) -> SetTempHumidityResponse:
         """
         Set temperature and humidity parameters.
@@ -636,11 +640,13 @@ class Api:
             SetTemp_L=temp_low,
             SetHum_H=humidity_high,
             SetHum_L=humidity_low,
-            SetHum_Range=humidity_range
+            SetHum_Range=humidity_range,
         )
         return SetTempHumidityResponse.from_response(response)
 
-    async def set_time(self, hour: int, minute: int, time_range: str) -> SetTimeResponse:
+    async def set_time(
+        self, hour: int, minute: int, time_range: str
+    ) -> SetTimeResponse:
         """
         Set the time parameters.
 
@@ -654,10 +660,7 @@ class Api:
         """
         await self.ensure_logged_in()
         response = await self.device.send_command(
-            Api="SetTime",
-            SetHour=hour,
-            SetMinute=minute,
-            SetTime_Range=time_range
+            Api="SetTime", SetHour=hour, SetMinute=minute, SetTime_Range=time_range
         )
         return SetTimeResponse.from_response(response)
 

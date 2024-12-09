@@ -13,7 +13,7 @@ from . import logger
 class Device:
     SERVICE_UUID = "000000ff-0000-1000-8000-00805f9b34fb"
     CHARACTERISTIC_UUID = "0000ff01-0000-1000-8000-00805f9b34fb"
-#    UUID_KEY_NOTIFY = "00002902-0000-1000-8000-00805f9b34fb"
+    #    UUID_KEY_NOTIFY = "00002902-0000-1000-8000-00805f9b34fb"
 
     def __init__(self, fan: BLEDevice) -> None:
         self.fan: BLEDevice = fan
@@ -41,7 +41,8 @@ class Device:
 
             if attempt < 2:  # Don't sleep after last attempt
                 logger.debug(
-                    "No fan found on attempt %d, sleeping before retry...", attempt + 1)
+                    "No fan found on attempt %d, sleeping before retry...", attempt + 1
+                )
                 await asyncio.sleep(1)
 
         raise Exception("No fan found after 3 attempts")
@@ -51,7 +52,7 @@ class Device:
         Slices *data* into chunks of size *n*. The last slice may be smaller than
         *n*.
         """
-        return takewhile(len, (data[i: i + n] for i in count(0, n)))
+        return takewhile(len, (data[i : i + n] for i in count(0, n)))
 
     def handle_disconnect(self, _: BleakClient) -> None:
         logger.info("Device was disconnected, goodbye.")
@@ -61,7 +62,7 @@ class Device:
 
     def handle_rx(self, _: BleakGATTCharacteristic, data: bytearray) -> None:
         logger.debug("received: %s", data)
-        str = data.decode('utf-8')
+        str = data.decode("utf-8")
         self.receive_buffer.write(str)
         self.data_waiting.release()
 
@@ -91,8 +92,9 @@ class Device:
             await self.data_waiting.acquire()
             try:
                 value = json.loads(self.receive_buffer.getvalue())
-                logger.debug("Received response %s in %d packets",
-                             value, self.packet_counter)
+                logger.debug(
+                    "Received response %s in %d packets", value, self.packet_counter
+                )
                 self.packet_counter = 0
                 self.receive_buffer = StringIO()
                 return value
@@ -103,7 +105,8 @@ class Device:
 
     async def connect(self) -> None:
         self.client = BleakClient(
-            self.fan, disconnected_callback=self.handle_disconnect)
+            self.fan, disconnected_callback=self.handle_disconnect
+        )
         await self.client.connect()
         self.connected = True
         logger.info("Connected to %s", self.fan.name)
@@ -116,11 +119,11 @@ class Device:
         logger.debug("Found service: %s", self.service.description)
 
         self.characteristic = self.service.get_characteristic(
-            Device.CHARACTERISTIC_UUID)
+            Device.CHARACTERISTIC_UUID
+        )
         if self.characteristic is None:
             raise Exception("Characteristic not found")
-        logger.debug("Found characteristic: %s",
-                     self.characteristic.description)
+        logger.debug("Found characteristic: %s", self.characteristic.description)
 
     async def send_message(self, message: bytes) -> None:
         """
@@ -138,12 +141,13 @@ class Device:
         if not self.connected:
             raise Exception("Not connected")
 
-        for s in self.sliced(message, self.characteristic.max_write_without_response_size):
+        for s in self.sliced(
+            message, self.characteristic.max_write_without_response_size
+        ):
             response = await self.client.write_gatt_char(
                 self.characteristic, s, response=True
             )
-            logger.debug("Sent %s (%d bytes), response: %s",
-                         s, len(s), response)
+            logger.debug("Sent %s (%d bytes), response: %s", s, len(s), response)
 
     async def send_command(self, **kwargs) -> dict:
         """
