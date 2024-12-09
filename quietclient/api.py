@@ -29,32 +29,21 @@ class FanInfo:
 
 
 @dataclass
-class VersionInfo:
-    """
-    Version information for the fan.
-
-    Attributes:
-        version: Software version
-        protect_temp: Protection temperature threshold
-        create_date: Creation date
-        create_mode: Creation mode
-        hw_version: Hardware version
-    """
-    version: str
-    protect_temp: int
-    create_date: str
-    create_mode: str
-    hw_version: str
+class PairModeResponse:
+    response: dict
 
     @classmethod
     def from_response(cls, response: dict) -> Self:
-        return cls(
-            version=response["Version"],
-            protect_temp=response["ProtectTemp"],
-            create_date=response["Create_Date"],
-            create_mode=response["Create_Mode"],
-            hw_version=response["HW_Version"]
-        )
+        return cls(response=response)
+
+
+@dataclass
+class PairResponse:
+    response: dict
+
+    @classmethod
+    def from_response(cls, response: dict) -> Self:
+        return cls(response=response)
 
 
 @dataclass
@@ -166,64 +155,6 @@ class RemainTime:
 
 
 @dataclass
-class UpgradeState:
-    state: str
-
-    @classmethod
-    def from_response(cls, response: dict) -> Self:
-        return cls(
-            state=response['State']
-        )
-
-
-@dataclass
-class WorkState:
-    """
-    Current working state of the fan.
-
-    Attributes:
-        mode: Current operating mode
-        range: Operating range
-        sensor_state: State of the sensors
-        temperature: Current temperature
-        humidity: Current humidity percentage
-    """
-    mode: str
-    range: str
-    sensor_state: str
-    temperature: float
-    humidity: int
-
-    @classmethod
-    def from_response(cls, response: dict) -> Self:
-        return cls(
-            mode=response['Mode'],
-            range=response['Range'],
-            sensor_state=response['SensorState'],
-            temperature=response['Temp_Sample'] / 10,
-            humidity=response['Humidity_Sample']
-        )
-
-
-@dataclass
-class PairResponse:
-    response: dict
-
-    @classmethod
-    def from_response(cls, response: dict) -> Self:
-        return cls(response=response)
-
-
-@dataclass
-class PairModeResponse:
-    response: dict
-
-    @classmethod
-    def from_response(cls, response: dict) -> Self:
-        return cls(response=response)
-
-
-@dataclass
 class ResetResponse:
     response: dict
 
@@ -293,6 +224,86 @@ class SetTimeResponse:
     @classmethod
     def from_response(cls, response: dict) -> Self:
         return cls(response=response)
+
+
+@dataclass
+class UpgradeResponse:
+    flag: str
+
+    @classmethod
+    def from_response(cls, response: dict) -> Self:
+        return cls(
+            flag=response['Flag']
+        )
+
+
+@dataclass
+class UpgradeState:
+    state: str
+
+    @classmethod
+    def from_response(cls, response: dict) -> Self:
+        return cls(
+            state=response['State']
+        )
+
+
+@dataclass
+class VersionInfo:
+    """
+    Version information for the fan.
+
+    Attributes:
+        version: Software version
+        protect_temp: Protection temperature threshold
+        create_date: Creation date
+        create_mode: Creation mode
+        hw_version: Hardware version
+    """
+    version: str
+    protect_temp: int
+    create_date: str
+    create_mode: str
+    hw_version: str
+
+    @classmethod
+    def from_response(cls, response: dict) -> Self:
+        return cls(
+            version=response["Version"],
+            protect_temp=response["ProtectTemp"],
+            create_date=response["Create_Date"],
+            create_mode=response["Create_Mode"],
+            hw_version=response["HW_Version"]
+        )
+
+
+@dataclass
+class WorkState:
+    """
+    Current working state of the fan.
+
+    Attributes:
+        mode: Current operating mode
+        range: Operating range
+        sensor_state: State of the sensors
+        temperature: Current temperature
+        humidity: Current humidity percentage
+    """
+    mode: str
+    range: str
+    sensor_state: str
+    temperature: float
+    humidity: int
+
+    @classmethod
+    def from_response(cls, response: dict) -> Self:
+        return cls(
+            mode=response['Mode'],
+            range=response['Range'],
+            sensor_state=response['SensorState'],
+            temperature=response['Temp_Sample'] / 10,
+            humidity=response['Humidity_Sample']
+        )
 
 
 class GuideSetup(str, Enum):
@@ -398,6 +409,7 @@ class Api:
         """
         await self.ensure_logged_in()
 
+# TODO: the android app passes "FanType":"THREE" here
         response = await self.device.send_command(Api="GetPresets")
         presets = [Preset.from_response(preset)
                    for preset in response["Presets"]]
@@ -537,6 +549,8 @@ class Api:
         response = await self.device.send_command(Api="SetGuideSetup", GuideSetup=guide_setup)
         return SetGuideSetupResponse.from_response(response)
 
+    # TODO: the android app passes "Mode":"TH" here
+    # it gets a response like: {"Api": "SetMode", "WorkMode": "TH", "Flag": "TRUE"}
     async def set_mode(self, mode: Mode) -> SetModeResponse:
         """
         Set the fan's operating mode.
@@ -549,6 +563,7 @@ class Api:
         """
         await self.ensure_logged_in()
         response = await self.device.send_command(Api="SetMode", Mode=mode)
+        # TODO: check that Flag is TRUE
         return SetModeResponse.from_response(response)
 
     async def set_presets(self) -> SetPresetsResponse:
@@ -630,3 +645,17 @@ class Api:
             SetTime_Range=time_range
         )
         return SetTimeResponse.from_response(response)
+
+    async def upgrade(self, url: str) -> UpgradeResponse:
+        """
+        Initiate a firmware upgrade from the specified URL.
+
+        Args:
+            url: The URL to download the firmware from
+
+        Returns:
+            UpgradeResponse containing the result
+        """
+        await self.ensure_logged_in()
+        response = await self.device.send_command(Api="Upgrade", URL=url)
+        return UpgradeResponse.from_response(response)

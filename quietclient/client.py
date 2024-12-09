@@ -38,30 +38,23 @@ class Client:
         await self.api.login()
 
     async def doit(self) -> None:
-        #        print(await self.api.testcmd())
+        # the android app does this:
+        # login
+        # get fan info
+        # get parameters
+        # get version
+        # get presets
+        # get fan info (again)
+        # get work state (mode is Idle)
+        # set guide setup = no
+        # set mode mode=TH
+        # get work state (again) now mode is TH
+        # set mode mode=IDLE
+        # get work state (again) mode is Idle again
+        # set mode mode=Timer
+        # get work state (again) now mode is Timer
+        # get remain time
+        # set mode mode=Idle
 
-        # Get all states and info
-
-        reset_response = await self.api.reset()
-        print(f"Reset Response: {reset_response}")
-
-        set_fan_info = await self.api.set_fan_info()
-        print(f"Set Fan Info Response: {set_fan_info}")
-
-        set_guide = await self.api.set_guide_setup()
-        print(f"Set Guide Setup Response: {set_guide}")
-
-        set_mode = await self.api.set_mode()
-        print(f"Set Mode Response: {set_mode}")
-
-        set_presets = await self.api.set_presets()
-        print(f"Set Presets Response: {set_presets}")
-
-        set_router = await self.api.set_router()
-        print(f"Set Router Response: {set_router}")
-
-        set_temp = await self.api.set_temp_humidity()
-        print(f"Set Temp Humidity Response: {set_temp}")
-
-        set_time = await self.api.set_time()
-        print(f"Set Time Response: {set_time}")
+        workstate = await self.api.get_work_state()
+        print(workstate)
