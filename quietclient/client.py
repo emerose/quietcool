@@ -74,17 +74,17 @@ class Client:
     async def pair(self) -> None:
         login_result = await self.api.send_login()
         if login_result["Result"] == "Success":
-            print("Already paired")
+            logger.info("Already paired")
             return
         elif login_result["PairState"] == "No":
-            print("Not in pairing mode")
+            logger.info("Not in pairing mode")
             return
-        print("Pairing...")
+        logger.info("Pairing...")
         result = await self.api.pair(self.api_id)
         if result:
-            print("Pairing successful")
+            logger.info("Pairing successful")
         else:
-            print("Pairing failed")
+            logger.info("Pairing failed")
 
     async def get_info(self) -> dict:
         faninfo = await self.api.get_fan_info()
