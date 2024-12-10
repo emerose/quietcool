@@ -14,6 +14,14 @@ This client allows you to interact with QuietCool whole house fans that use the 
 
 ## Installation
 
+### From PyPI
+
+You can install the package directly from PyPI using pip:
+
+```bash
+pip install quietcool
+```
+
 ### From Source
 
 1. Clone the repository:
