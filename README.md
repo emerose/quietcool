@@ -59,14 +59,17 @@ pip install quietcool
 
 ### 1. API ID Setup
 
-The client requires an API ID to authenticate with the fan. You can provide it in several ways (checked in this order):
+The client requires an API ID to authenticate with the fan. The ID is an
+alphanumeric (hex?) string of the form `a1b2c1d2a2b1c2d1`, and is used to
+identify / authenticate the client. You can generate your own and provide it in
+several ways (checked in this order):
 
 1. Command line argument: `--id YOUR_API_ID`
 2. Environment variable: `QUIETCOOL=YOUR_API_ID`
 3. Config files (first found is used):
-   - `/etc/quietcool`
-   - `~/.quietcool`
    - `./.quietcool`
+   - `~/.quietcool`
+   - `/etc/quietcool`
 
 ### 2. Pairing
 

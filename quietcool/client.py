@@ -29,9 +29,9 @@ class Client:
         Args:
             api_id: The API ID to use for authentication. If not provided, will check:
                    1. QUIETCOOL environment variable
-                   2. /etc/quietcool file
+                   2. ./.quietcool file
                    3. ~/.quietcool file
-                   4. ./.quietcool file
+                   4. /etc/quietcool file
                    The first found value will be used.
             device: Optional Device instance. If not provided, will attempt to discover
                    a fan on the network using Device.find_fan()
@@ -59,9 +59,9 @@ class Client:
 
         # Check config files in order
         config_paths = [
-            pathlib.Path("/etc/quietcool"),
-            pathlib.Path.home() / ".quietcool",
             pathlib.Path(".quietcool"),
+            pathlib.Path.home() / ".quietcool",
+            pathlib.Path("/etc/quietcool"),
         ]
 
         for path in config_paths:
