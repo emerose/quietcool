@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="quietcool",
-    version="0.1.1",
+    version="0.1.2",
     author="Sam Quigley",
     author_email="quigley@emerose.com",
     description="A Python client for controlling QuietCool Wireless RF Control Kit fans via BLE",
